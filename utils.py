@@ -18,10 +18,11 @@ STUDY_KIT_CHAR_LIMIT = 40000
 GEMINI_TIMEOUT_MS = 45000
 
 CANDIDATE_MODELS = [
+    "gemini-2.5-flash",
     "gemini-3.5-flash",
     "gemini-3.5-flash-lite",
-    "gemini-2.5-flash",
 ]
+
 
 
 
@@ -156,13 +157,16 @@ def _make_gemini_client(api_key: str) -> genai.Client:
 
 
 def _content_config(model_name: str, **kwargs) -> types.GenerateContentConfig:
-    try:
-        return types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=0),
-            **kwargs,
-        )
-    except Exception:
-        return types.GenerateContentConfig(**kwargs)
+    if model_name == "gemini-2.5-flash":
+        try:
+            return types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+                **kwargs,
+            )
+        except Exception:
+            pass
+    return types.GenerateContentConfig(**kwargs)
+
 
 def extract_and_prepare_text(
     uploaded_files: List[Union[io.BytesIO, object]],
@@ -293,7 +297,7 @@ def generate_study_materials(text: str) -> StudyKit:
             last_error = e
             if "401" in err_msg or "403" in err_msg or "api_key" in err_msg:
                 raise ValueError("Invalid Gemini API key. Verify GEMINI_API_KEY in .env.")
-            if "429" in err_msg or "resource_exhausted" in err_msg or "quota" in err_msg or "404" in err_msg:
+            if any(code in err_msg for code in ("400", "invalid_argument", "429", "resource_exhausted", "quota", "404")):
                 continue
             raise ValueError(f"Gemini API error ({model_name}): {e}")
 
@@ -302,6 +306,7 @@ def generate_study_materials(text: str) -> StudyKit:
             continue
 
     raise ValueError(f"Gemini could not complete the request right now. Details: {last_error}")
+
 ANSWER_FORMAT_INSTRUCTIONS = {
     "2-Mark Answer (Crisp & Direct)": (
         "Format Requirement - 2-Mark Answer (Crisp & Direct):\n"
