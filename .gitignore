@@ -1,0 +1,25 @@
+# Environment variables
+.env
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Streamlit config / cache
+.streamlit/*
+!.streamlit/config.toml
+
+# SQLite Database
+study_app.db
+*.db
